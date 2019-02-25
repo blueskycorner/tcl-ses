@@ -90,6 +90,35 @@ def sendMail(emailFrom, emailTo, invoiceFilename, tclCardObjectKey, month):
     # The email body for recipients with non-HTML email clients.
     BODY_TEXT = "Bonjour,\nVoici un justificatif d'abonnement de transport en commun pour le mois " + month + "\n\nBien cordialement.\n\nBenjamin EHLERS\n\n"
 
+    # The HTML body of the email.
+    BODY_HTML = """\
+    <html>
+    <head></head>
+    <body>
+    Bonjour<br><br>
+    Voici un justificatif d'abonnement de transport en commun pour le mois 
+    """
+    
+    BODY_HTML += month
+
+    BODY_HTML += """\
+    .<br><br>
+    Bien cordialement.<br>
+    <br><font size="1" color="#4f4f4f" face="Century Gothic">PS: je ne travaille
+    pas le mercredi.</font>
+    <br><img src="https://s3.amazonaws.com/hardis-tcl-invoices-dev/hardis.jpg" style="border:0px solid" data-image-whitelisted="" class="CToWUd">
+    <br><font size="2" color="#4f4f4f" face="Century Gothic"><b>Benjamin EHLERS
+    | Architecte Cloud</b></font>
+    <br><font size="1" color="#4f4f4f" face="Century Gothic">06 20 39 78 61 | <a href="mailto:benjamin.ehlers@hardis.fr" target="_blank">benjamin.ehlers@hardis.fr</a></font>
+    <br><font size="1" color="#4f4f4f" face="Century Gothic">HARDIS GROUP - Immeuble
+    Le Seven, 69 Av Tony Garnier – 69007 LYON</font>
+    <br><a href="http://www.hardis-group.com" target="_blank" data-saferedirecturl="https://www.google.com/url?q=http://www.hardis-group.com&amp;source=gmail&amp;ust=1551193276200000&amp;usg=AFQjCNFJCmG3AY7VNcZfgs9UY_FPC3uOBg"><font size="1" color="blue" face="Century Gothic">www.hardis-group.com</font></a><font size="1" color="#4f4f4f" face="Century Gothic">
+    - @GroupeHardis</font><div class="yj6qo"></div><div class="adL">
+    </div></div></div>
+    </body>
+    </html>
+    """
+
     # The character encoding for the email.
     CHARSET = "utf-8"
 
@@ -109,10 +138,11 @@ def sendMail(emailFrom, emailTo, invoiceFilename, tclCardObjectKey, month):
     # Encode the text and HTML content and set the character encoding. This step is
     # necessary if you're sending a message with characters outside the ASCII range.
     textpart = MIMEText(BODY_TEXT.encode(CHARSET), 'plain', CHARSET)
+    htmlpart = MIMEText(BODY_HTML.encode(CHARSET), 'html', CHARSET) 
 
     # Add the text and HTML parts to the child container.
     msg_body.attach(textpart)
-    # msg_body.attach(htmlpart)
+    msg_body.attach(htmlpart)
 
     # Define the attachment_INVOICE part and encode it using MIMEApplication.
     att1 = MIMEApplication(open(ATTACHMENT_INVOICE, 'rb').read())
