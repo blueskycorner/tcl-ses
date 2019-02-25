@@ -100,9 +100,10 @@ def sendMail(emailFrom, emailTo, invoiceFilename, tclCardObjectKey, month):
     """
     
     BODY_HTML += month
+    BODY_HTML += '.'
 
     BODY_HTML += """\
-    .<br><br>
+    <br><br>
     Bien cordialement.<br>
     <br><font size="1" color="#4f4f4f" face="Century Gothic">PS: je ne travaille
     pas le mercredi.</font>
