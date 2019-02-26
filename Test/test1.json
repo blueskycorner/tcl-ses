@@ -1,0 +1,38 @@
+{
+    "Records": [
+      {
+        "eventVersion": "2.1",
+        "eventSource": "aws:s3",
+        "awsRegion": "us-east-1",
+        "eventTime": "2019-02-15T09:17:06.421Z",
+        "eventName": "ObjectCreated:Put",
+        "userIdentity": {
+          "principalId": "AWS:AIDAINR7FHESBZ5YUQE6A"
+        },
+        "requestParameters": {
+          "sourceIPAddress": "90.102.110.89"
+        },
+        "responseElements": {
+          "x-amz-request-id": "3CC425E9DDCC80EA",
+          "x-amz-id-2": "w0HpU9Vg4kTQlq8AXhbqR9r+7qqQHlGgeplLgH6WzmQkyySMvj2CisVHJzuQFKOBEqtco9aBdyA="
+        },
+        "s3": {
+          "s3SchemaVersion": "1.0",
+          "configurationId": "11bca8a7-6071-4b45-bd92-1cfbd7046148",
+          "bucket": {
+            "name": "hardis-tcl-invoices-dev",
+            "ownerIdentity": {
+              "principalId": "A5769J9JPS9SL"
+            },
+            "arn": "arn:aws:s3:::hardis-tcl-invoices-dev"
+          },
+          "object": {
+            "key": "invoices/2019-02_TCL.jpg",
+            "size": 1995425,
+            "eTag": "d94c72c512af4f2ea313a84a29f0b4b6",
+            "sequencer": "005C668392525083D7"
+          }
+        }
+      }
+    ]
+  }
