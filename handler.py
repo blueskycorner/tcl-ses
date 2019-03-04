@@ -9,10 +9,12 @@ from botocore.exceptions import ClientError
 
 emailFromEnvName = 'emailFrom'
 emailToEnvName = 'emailTo'
+emailCcEnvName = 'emailCc'
 tclCardObjectKeyEnvName = 'tclCardObjectKey'
 prefixEnvName = 'prefix'
 emailFrom = os.getenv(emailFromEnvName)
 emailTo = os.getenv(emailToEnvName)
+emailCc = os.getenv(emailCcEnvName)
 tclCardObjectKey = os.getenv(tclCardObjectKeyEnvName)
 prefix = os.getenv(prefixEnvName)
 # emailFrom = 'benjamin.ehlers@hardis.fr' #os.getenv(emailFromEnvName)
@@ -71,7 +73,7 @@ def getMonth(fileKey):
 
     return month
 
-def sendMail(emailFrom, emailTo, invoiceFilename, tclCardObjectKey, month):
+def sendMail(emailFrom, emailTo, emailCc, invoiceFilename, tclCardObjectKey, month):
     # Replace sender@example.com with your "From" address.
     # This address must be verified with Amazon SES.
     SENDER = emailFrom
@@ -79,6 +81,8 @@ def sendMail(emailFrom, emailTo, invoiceFilename, tclCardObjectKey, month):
     # Replace recipient@example.com with a "To" address. If your account 
     # is still in the sandbox, this address must be verified.
     RECIPIENT = emailTo
+
+    CC = emailCc
 
     # The subject line for the email.
     SUBJECT = "Remboursement transport en commun"
@@ -132,6 +136,7 @@ def sendMail(emailFrom, emailTo, invoiceFilename, tclCardObjectKey, month):
     msg['Subject'] = SUBJECT 
     msg['From'] = SENDER 
     msg['To'] = RECIPIENT
+    msg['Cc'] = CC
 
     # Create a multipart/alternative child container.
     msg_body = MIMEMultipart('alternative')
@@ -167,7 +172,7 @@ def sendMail(emailFrom, emailTo, invoiceFilename, tclCardObjectKey, month):
         response = client.send_raw_email(
             Source=SENDER,
             Destinations=[
-                RECIPIENT
+                RECIPIENT,CC
             ],
             RawMessage={
                 'Data':msg.as_string(),
@@ -194,6 +199,7 @@ def sendTclInvoice(event, context):
         print("fileKey: " + fileKey)
         print("emailFrom: " + emailFrom)
         print('emailTo: ' + emailTo)
+        print('emailCc: ' + emailCc)
         print('tclCardObjectKey: ' + tclCardObjectKey)
         print('month: ' + month)
         print('invoiceFilename: ' + invoiceFilename)
@@ -203,7 +209,7 @@ def sendTclInvoice(event, context):
         s3.Bucket(bucket).download_file(fileKey, prefix + invoiceFilename)
         s3.Bucket(bucket).download_file(tclCardObjectKey, prefix + tclCardObjectKey)
         
-        sendMail(emailFrom, emailTo, invoiceFilename, tclCardObjectKey, month)
+        sendMail(emailFrom, emailTo, emailCc, invoiceFilename, tclCardObjectKey, month)
     except Exception as e:
         print(str(e))
 

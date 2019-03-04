@@ -96,6 +96,11 @@ functions:
         - envValues
         - ${self:provider.stage}
         - emailTo
+      emailCc:
+        Fn::FindInMap:
+        - envValues
+        - ${self:provider.stage}
+        - emailCc
       tclCardObjectKey: ${self:custom.tclCardObjectKey}
       prefix: '/tmp/'
 
@@ -106,9 +111,11 @@ resources:
       dev:
         emailFrom: benjamin.ehlers@hardis.fr
         emailTo: benjamin.ehlers@hardis.fr
+        emailCc: ehlers.benjamin@free.fr
       prod:
         emailFrom: benjamin.ehlers@hardis.fr
         emailTo: rhpaie@hardis.fr
+        emailCc: benjamin.ehlers@hardis.fr
 
 #  Resources:
 #    NewResource:
