@@ -12,11 +12,13 @@ emailToEnvName = 'emailTo'
 emailCcEnvName = 'emailCc'
 tclCardObjectKeyEnvName = 'tclCardObjectKey'
 prefixEnvName = 'prefix'
+errorTopicArnParamName = 'errorTopicArn'
 emailFrom = os.getenv(emailFromEnvName)
 emailTo = os.getenv(emailToEnvName)
 emailCc = os.getenv(emailCcEnvName)
 tclCardObjectKey = os.getenv(tclCardObjectKeyEnvName)
 prefix = os.getenv(prefixEnvName)
+
 # emailFrom = 'benjamin.ehlers@hardis.fr' #os.getenv(emailFromEnvName)
 # emailTo = 'benjamin.ehlers@hardis.fr' #os.getenv(emailToEnvName)
 # tclCardObjectKey = 'CarteTCL.jpg' #os.getenv(tclCardObjectKeyEnvName)
@@ -34,39 +36,57 @@ def getInvoiceFilename(fileKey):
     
     return invoiceFilename
 
-def getMonth(fileKey):
-    month = ''
+def getMonth(bucket, fileKey):
+    month = None
 
     try:
-        reg = '20[0-9][0-9]-([0-1][0-9])_TCL'
-        month_pattern = re.compile(reg)
-        monthNumber = month_pattern.search(fileKey).group(1)
-        print('monthNumber: ' + monthNumber)
-        
-        if (monthNumber == '01'):
-            month = "de Janvier"
-        elif (monthNumber == '02'):
-            month = "de Février"
-        elif (monthNumber == '03'):
-            month = "de Mars"
-        elif (monthNumber == '04'):
-            month = "d'Avril"
-        elif (monthNumber == '05'):
-            month = "de Mai"
-        elif (monthNumber == '06'):
-            month = "de Juin"
-        elif (monthNumber == '07'):
-            month = "de Juillet"
-        elif (monthNumber == '08'):
-            month = "d'Août"
-        elif (monthNumber == '09'):
-            month = "de Septembre"
-        elif (monthNumber == '10'):
-            month = "d'Octobre"
-        elif (monthNumber == '11'):
-            month = "de Novembre"
-        elif (monthNumber == '12'):
-            month = "de Décembre"
+        rekognition = boto3.client("rekognition")
+        response = rekognition.detect_text(
+            Image={
+                "S3Object": {
+                    "Bucket": bucket,
+                    "Name": fileKey,
+                }
+            },
+        )
+
+        monthNumber = None
+        reg = '01\/([0-1][0-9])\/[0-9][0-9]'
+        for item in response['TextDetections']:
+            if (item['Type'] == 'WORD') and (int(item['Confidence']) >= 99):
+                month_pattern = re.compile(reg)
+                res = month_pattern.search(item['DetectedText'])
+                if (res is not None):
+                    monthNumber = res.group(1)
+                    print(item['DetectedText'])
+
+        if monthNumber is not None:     
+            if (monthNumber == '01'):
+                month = "de Janvier"
+            elif (monthNumber == '02'):
+                month = "de Février"
+            elif (monthNumber == '03'):
+                month = "de Mars"
+            elif (monthNumber == '04'):
+                month = "d'Avril"
+            elif (monthNumber == '05'):
+                month = "de Mai"
+            elif (monthNumber == '06'):
+                month = "de Juin"
+            elif (monthNumber == '07'):
+                month = "de Juillet"
+            elif (monthNumber == '08'):
+                month = "d'Août"
+            elif (monthNumber == '09'):
+                month = "de Septembre"
+            elif (monthNumber == '10'):
+                month = "d'Octobre"
+            elif (monthNumber == '11'):
+                month = "de Novembre"
+            elif (monthNumber == '12'):
+                month = "de Décembre"
+        else:
+            raise Exception('Impossible to extract the month')
     except Exception as e:
         print("Error while extracting month")
         raise(e)
@@ -193,7 +213,7 @@ def sendTclInvoice(event, context):
 
         invoiceFilename = getInvoiceFilename(fileKey)
 
-        month = getMonth(fileKey)
+        month = getMonth(bucket, fileKey)
         
         print("bucket: " + bucket)
         print("fileKey: " + fileKey)
@@ -212,6 +232,20 @@ def sendTclInvoice(event, context):
         sendMail(emailFrom, emailTo, emailCc, invoiceFilename, tclCardObjectKey, month)
     except Exception as e:
         print(str(e))
+        error = {"message": str(e)}
+        sendError(error)
+
+def sendError(message):
+
+    print(message)
+    sns = boto3.client('sns')
+    
+    errorTopicArn=os.getenv(errorTopicArnParamName)
+    response = sns.publish(
+        TargetArn=errorTopicArn,
+        Message=json.dumps({'default': json.dumps(message)}),
+        MessageStructure='json')
+    print(response)
 
 if __name__ == "__main__":
     try:

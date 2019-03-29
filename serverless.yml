@@ -31,10 +31,20 @@ provider:
       Action:
         - s3:GetObject
       Resource: arn:aws:s3:::${self:custom.tclBucketName}-${self:provider.stage}/*
+    - Effect: "Allow"
+      Action:
+        - rekognition:DetectText
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - "sns:Publish"
+      Resource:
+        - !Ref ErrorSNS
 
 custom:
   tclBucketName: hardis-tcl-invoices
   tclCardObjectKey: CarteTCL.jpg
+  accountableEmail: benjamin.ehlers@hardis.fr
 
 # you can overwrite defaults here
 #  stage: dev
@@ -103,6 +113,7 @@ functions:
         - emailCc
       tclCardObjectKey: ${self:custom.tclCardObjectKey}
       prefix: '/tmp/'
+      errorTopicArn: !Ref ErrorSNS
 
 # you can add CloudFormation resource templates here
 resources:
@@ -116,13 +127,16 @@ resources:
         emailFrom: benjamin.ehlers@hardis.fr
         emailTo: rhpaie@hardis.fr
         emailCc: benjamin.ehlers@hardis.fr
-
-#  Resources:
-#    NewResource:
-#      Type: AWS::S3::Bucket
-#      Properties:
-#        BucketName: my-new-bucket
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
+  Resources:
+    ErrorSNS:
+      Type: AWS::SNS::Topic
+      Properties: 
+        DisplayName: tclError
+        Subscription:
+        - Endpoint: ${self:custom.accountableEmail}
+          Protocol: email
+        TopicName: tclError
+  Outputs:
+    ErrorSNSOut:
+      Description: SNS topic for error
+      Value: !Ref ErrorSNS
