@@ -131,7 +131,7 @@ def sendMail(emailFrom, emailTo, emailCc, invoiceFilename, tclCardObjectKey, mon
     Bien cordialement.<br>
     <br><font size="1" color="#4f4f4f" face="Century Gothic">PS: je ne travaille
     pas le mercredi.</font>
-    <br><img src="https://s3.amazonaws.com/hardis-tcl-invoices-dev/hardis.jpg" style="border:0px solid" data-image-whitelisted="" class="CToWUd">
+    <br><img src="https://s3.amazonaws.com/tcl-invoices-dev/hardis.jpg" style="border:0px solid" data-image-whitelisted="" class="CToWUd">
     <br><font size="2" color="#4f4f4f" face="Century Gothic"><b>Benjamin EHLERS
     | Architecte Cloud</b></font>
     <br><font size="1" color="#4f4f4f" face="Century Gothic">06 20 39 78 61 | <a href="mailto:benjamin.ehlers@hardis.fr" target="_blank">benjamin.ehlers@hardis.fr</a></font>
