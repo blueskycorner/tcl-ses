@@ -19,11 +19,17 @@ service: tcl-ses # NOTE: update this with your service name
 
 plugins:
   - aws-amplify-serverless-plugin
+  - serverless-plugin-existing-s3
 
 provider:
   name: aws
   runtime: python3.7
   stage: ${opt:stage, 'dev'}
+  stackTags:
+    Application: tcl
+  tags:
+    Application: tcl
+
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -45,7 +51,8 @@ provider:
         - !Ref ErrorSNS
 
 custom:
-  tclBucketName: hardis-tcl-invoices
+  tclBucketName: tcl-invoices
+  invoicesFolder: invoices
   tclCardObjectKey: CarteTCL.jpg
   accountableEmail: benjamin.ehlers@hardis.fr
   amplify:
@@ -88,6 +95,27 @@ custom:
 #    - exclude-me-dir/**
 
 functions:
+  buildSignedUrlUpload:
+    handler: buildSignedUrlUpload.buildSignedUrlUpload
+    events:
+      - http:
+          path: buildSignedUrlUpload
+          method: get
+          cors: true
+          authorizer:
+            name: authorizer
+            arn: arn:aws:cognito-idp:us-east-1:132080954908:userpool/us-east-1_75UGv7Hjf
+          request:
+            parameters:
+              querystrings:
+                filename: true
+
+    environment:
+      bucketName: !Ref TclBucket
+      prefix: ${self:custom.invoicesFolder}
+      
+    role: buildSignedUrlUploadRole
+
   sendTclInvoice:
     handler: handler.sendTclInvoice
 
@@ -95,11 +123,12 @@ functions:
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
     events:
-      - s3:
+      - existingS3:
           bucket: ${self:custom.tclBucketName}-${self:provider.stage}
-          event: s3:ObjectCreated:*
+          events:
+            - s3:ObjectCreated:*
           rules:
-            - prefix: invoices/
+            - prefix: ${self:custom.invoicesFolder}/
             - suffix: .jpg
 
 #    Define function environment variables here
@@ -136,6 +165,56 @@ resources:
         emailTo: rhpaie@hardis.fr
         emailCc: benjamin.ehlers@hardis.fr
   Resources:
+    TclBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.tclBucketName}-${self:provider.stage}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedMethods:
+                - PUT
+              AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+    
+    buildSignedUrlUploadRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: buildSignedUrlUploadRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: myPolicyName
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: 
+                    - 'Fn::Join':
+                      - ':'
+                      -
+                        - 'arn:aws:logs'
+                        - Ref: 'AWS::Region'
+                        - Ref: 'AWS::AccountId'
+                        - 'log-group:/aws/lambda/*:*:*'
+                - Effect: Allow
+                  Action: # Gives permission to S3
+                    - s3:PutObject
+                  Resource: 
+                    - arn:aws:s3:::${self:custom.tclBucketName}-${self:provider.stage}
+                    - arn:aws:s3:::${self:custom.tclBucketName}-${self:provider.stage}/*
+
     ErrorSNS:
       Type: AWS::SNS::Topic
       Properties: 
@@ -144,6 +223,7 @@ resources:
         - Endpoint: ${self:custom.accountableEmail}
           Protocol: email
         TopicName: tclError
+
     UserPool:
       Type: AWS::Cognito::UserPool
       Properties:
@@ -159,6 +239,7 @@ resources:
             RequireNumbers: false
             RequireSymbols: false
             RequireUppercase: false
+
     AppClient:
       Type: AWS::Cognito::UserPoolClient
       Properties:
@@ -167,6 +248,7 @@ resources:
             - USER_PASSWORD_AUTH
           GenerateSecret: false
           UserPoolId: !Ref UserPool
+
   Outputs:
     ErrorSNSOut:
       Description: SNS topic for error
