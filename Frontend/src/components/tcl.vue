@@ -12,6 +12,9 @@
       <button @click="removeImage">Remove image</button>
       <button @click="uploadImage">Upload image</button>
     </div>
+    <div v-if="end">
+      <h2>OK: {{ok}}</h2>
+    </div>
     <amplify-sign-out></amplify-sign-out>
   </div>
 </template>
@@ -26,7 +29,9 @@ export default {
   data () {
     return {
       image: '',
-      filename: ''
+      filename: '',
+      end: false,
+      ok: ''
     }
   },
   methods: {
@@ -51,6 +56,9 @@ export default {
     removeImage: function (e) {
       console.log('Remove clicked')
       this.image = ''
+      this.filename = ''
+      this.end = false
+      this.ok = ''
     },
     uploadImage: async function (e) {
       console.log('Upload clicked')
@@ -88,6 +96,8 @@ export default {
         body: blobData
       })
       console.log('Result: ', result)
+      this.end = true
+      this.ok = result.ok
     }
   }
 }
@@ -108,5 +118,16 @@ li {
 }
 a {
   color: #42b983;
+}
+#app {
+  text-align: center;
+}
+img {
+  width: 30%;
+  margin: auto;
+  display: block;
+  margin-bottom: 10px;
+}
+button {
 }
 </style>

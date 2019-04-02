@@ -86,7 +86,7 @@ def getMonth(bucket, fileKey):
             elif (monthNumber == '12'):
                 month = "de Décembre"
         else:
-            raise Exception('Impossible to extract the month')
+            raise Exception('Impossible to extract the month. Rekognition returns: ' + str(response))
     except Exception as e:
         print("Error while extracting month")
         raise(e)
