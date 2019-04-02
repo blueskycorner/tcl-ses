@@ -17,6 +17,9 @@ service: tcl-ses # NOTE: update this with your service name
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
 
+plugins:
+  - aws-amplify-serverless-plugin
+
 provider:
   name: aws
   runtime: python3.7
@@ -45,6 +48,11 @@ custom:
   tclBucketName: hardis-tcl-invoices
   tclCardObjectKey: CarteTCL.jpg
   accountableEmail: benjamin.ehlers@hardis.fr
+  amplify:
+    - filename: ../Frontend/src/aws-exports.js
+      type: javascript
+      appClient: AppClient
+      s3bucket: disabled
 
 # you can overwrite defaults here
 #  stage: dev
@@ -136,6 +144,29 @@ resources:
         - Endpoint: ${self:custom.accountableEmail}
           Protocol: email
         TopicName: tclError
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        AdminCreateUserConfig: 
+          AllowAdminCreateUserOnly: true
+        UsernameAttributes: 
+          - email
+        UserPoolName: tcl
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 6
+            RequireLowercase: false
+            RequireNumbers: false
+            RequireSymbols: false
+            RequireUppercase: false
+    AppClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+          ClientName: tclApp
+          ExplicitAuthFlows:
+            - USER_PASSWORD_AUTH
+          GenerateSecret: false
+          UserPoolId: !Ref UserPool
   Outputs:
     ErrorSNSOut:
       Description: SNS topic for error
