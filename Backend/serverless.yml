@@ -39,6 +39,8 @@ provider:
     - Effect: "Allow"
       Action:
         - s3:GetObject
+        - s3:PutObject
+        - s3:DeleteObject
       Resource: arn:aws:s3:::${self:custom.tclBucketName}-${self:provider.stage}/*
     - Effect: "Allow"
       Action:
@@ -151,6 +153,7 @@ functions:
       tclCardObjectKey: ${self:custom.tclCardObjectKey}
       prefix: '/tmp/'
       errorTopicArn: !Ref ErrorSNS
+      rekognitionThreshold: 92
 
 # you can add CloudFormation resource templates here
 resources:

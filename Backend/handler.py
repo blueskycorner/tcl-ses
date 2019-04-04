@@ -13,11 +13,13 @@ emailCcEnvName = 'emailCc'
 tclCardObjectKeyEnvName = 'tclCardObjectKey'
 prefixEnvName = 'prefix'
 errorTopicArnParamName = 'errorTopicArn'
+rekognitionThresholdParamName = 'rekognitionThreshold'
 emailFrom = os.getenv(emailFromEnvName)
 emailTo = os.getenv(emailToEnvName)
 emailCc = os.getenv(emailCcEnvName)
 tclCardObjectKey = os.getenv(tclCardObjectKeyEnvName)
 prefix = os.getenv(prefixEnvName)
+rekognitionThreshold = int(os.getenv(rekognitionThresholdParamName))
 
 # emailFrom = 'benjamin.ehlers@hardis.fr' #os.getenv(emailFromEnvName)
 # emailTo = 'benjamin.ehlers@hardis.fr' #os.getenv(emailToEnvName)
@@ -36,8 +38,9 @@ def getInvoiceFilename(fileKey):
     
     return invoiceFilename
 
-def getMonth(bucket, fileKey):
+def getMonth(bucket, fileKey, rekognitionThreshold):
     month = None
+    filename = None
 
     try:
         rekognition = boto3.client("rekognition")
@@ -51,13 +54,14 @@ def getMonth(bucket, fileKey):
         )
 
         monthNumber = None
-        reg = '01\/([0-1][0-9])\/[0-9][0-9]'
+        reg = '01\/([0-1][0-9])\/([0-9][0-9])'
         for item in response['TextDetections']:
-            if (item['Type'] == 'WORD') and (int(item['Confidence']) >= 99):
+            if (item['Type'] == 'WORD') and (int(item['Confidence']) >= rekognitionThreshold):
                 month_pattern = re.compile(reg)
                 res = month_pattern.search(item['DetectedText'])
                 if (res is not None):
                     monthNumber = res.group(1)
+                    yearNumber = res.group(2)
                     print(item['DetectedText'])
 
         if monthNumber is not None:     
@@ -85,15 +89,18 @@ def getMonth(bucket, fileKey):
                 month = "de Novembre"
             elif (monthNumber == '12'):
                 month = "de Décembre"
+            
+            filename = '20' + str(yearNumber) + '-' + str(monthNumber) + '_TCL.jpg'
         else:
             raise Exception('Impossible to extract the month. Rekognition returns: ' + str(response))
     except Exception as e:
         print("Error while extracting month")
         raise(e)
 
-    return month
+    return month, filename
 
 def sendMail(emailFrom, emailTo, emailCc, invoiceFilename, tclCardObjectKey, month):
+    print("Preparing email")
     # Replace sender@example.com with your "From" address.
     # This address must be verified with Amazon SES.
     SENDER = emailFrom
@@ -166,29 +173,35 @@ def sendMail(emailFrom, emailTo, emailCc, invoiceFilename, tclCardObjectKey, mon
     textpart = MIMEText(BODY_TEXT.encode(CHARSET), 'plain', CHARSET)
     htmlpart = MIMEText(BODY_HTML.encode(CHARSET), 'html', CHARSET) 
 
+    print("Preparing email Step 2")
     # Add the text and HTML parts to the child container.
     msg_body.attach(textpart)
     msg_body.attach(htmlpart)
 
+    print("Preparing email Step 2")
     # Define the attachment_INVOICE part and encode it using MIMEApplication.
     att1 = MIMEApplication(open(ATTACHMENT_INVOICE, 'rb').read())
     att2 = MIMEApplication(open(ATTACHMENT_TCLCARD, 'rb').read())
 
+    print("Preparing email Step 3")
     # Add a header to tell the email client to treat this part as an attachment_INVOICE,
     # and to give the attachment_INVOICE a name.
     att1.add_header('Content-Disposition','attachment',filename=os.path.basename(ATTACHMENT_INVOICE))
     att2.add_header('Content-Disposition','attachment',filename=os.path.basename(ATTACHMENT_TCLCARD))
 
+    print("Preparing email Step 4")
     # Attach the multipart/alternative child container to the multipart/mixed
     # parent container.
     msg.attach(msg_body)
 
+    print("Preparing email Step 5")
     # Add the attachment_INVOICE to the parent container.
     msg.attach(att1)
     msg.attach(att2)
     #print(msg)
     try:
         #Provide the contents of the email.
+        print('Sending email')
         response = client.send_raw_email(
             Source=SENDER,
             Destinations=[
@@ -213,8 +226,9 @@ def sendTclInvoice(event, context):
 
         invoiceFilename = getInvoiceFilename(fileKey)
 
-        month = getMonth(bucket, fileKey)
+        month, filename = getMonth(bucket, fileKey, rekognitionThreshold)
         
+        print('filename: ' + filename)
         print("bucket: " + bucket)
         print("fileKey: " + fileKey)
         print("emailFrom: " + emailFrom)
@@ -226,10 +240,15 @@ def sendTclInvoice(event, context):
 
         # Download files
         s3 = boto3.resource('s3')
-        s3.Bucket(bucket).download_file(fileKey, prefix + invoiceFilename)
+        fileKeyRenamed = 'final/' + filename
+        print('fileKeyRenamed: ' + fileKeyRenamed)
+        if (fileKey != fileKeyRenamed):
+            s3.Object(bucket,fileKeyRenamed).copy_from(CopySource=bucket + '/' + fileKey)
+            s3.Object(bucket,invoiceFilename).delete()
+        s3.Bucket(bucket).download_file(fileKeyRenamed, prefix + filename)
         s3.Bucket(bucket).download_file(tclCardObjectKey, prefix + tclCardObjectKey)
         
-        sendMail(emailFrom, emailTo, emailCc, invoiceFilename, tclCardObjectKey, month)
+        sendMail(emailFrom, emailTo, emailCc, filename, tclCardObjectKey, month)
     except Exception as e:
         print(str(e))
         error = {"message": str(e)}
@@ -272,7 +291,7 @@ if __name__ == "__main__":
                 "s3SchemaVersion": "1.0",
                 "configurationId": "11bca8a7-6071-4b45-bd92-1cfbd7046148",
                 "bucket": {
-                    "name": "hardis-tcl-invoices-dev",
+                    "name": "tcl-invoices-dev",
                     "ownerIdentity": {
                     "principalId": "A5769J9JPS9SL"
                     },
