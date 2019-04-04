@@ -5,17 +5,19 @@
   "author": "",
   "private": true,
   "config": {
+    "env": "dev",
     "s3BucketName": "tcl-frontend"
   },
   "scripts": {
-    "create-b": "aws s3api create-bucket --bucket %npm_package_config_s3BucketName% --acl public-read",
-    "configure-b": "aws s3 website s3://%npm_package_config_s3BucketName%/ --index-document index.html --error-document error.html",
-    "configure-policy-b": "aws s3api put-bucket-policy --bucket %npm_package_config_s3BucketName% --policy file://bucket-policy.json",
-    "deploy-b": "aws s3 sync dist s3://%npm_package_config_s3BucketName%",
+    "create-b": "aws s3api create-bucket --bucket %npm_package_config_s3BucketName%-%npm_package_config_env% --acl public-read",
+    "configure-b": "aws s3 website s3://%npm_package_config_s3BucketName%-%npm_package_config_env%/ --index-document index.html --error-document error.html",
+    "configure-policy-b": "aws s3api put-bucket-policy --bucket %npm_package_config_s3BucketName%-%npm_package_config_env% --policy file://bucket-policy-%npm_package_config_env%.json",
+    "deploy-b": "aws s3 sync dist s3://%npm_package_config_s3BucketName%-%npm_package_config_env%",
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js --disable-host-check",
     "start": "npm run dev",
     "lint": "eslint --ext .js,.vue src",
-    "build": "node build/build.js"
+    "build": "node build/build.js",
+    "test": "echo %npm_package_config_env%"
   },
   "dependencies": {
     "aws-amplify": "^1.1.23",

@@ -77,7 +77,8 @@ export default {
         params: {
           filename: this.filename
         },
-        url: `https://c60esxid12.execute-api.us-east-1.amazonaws.com/dev/buildSignedUrlUpload`
+        // url: `https://c60esxid12.execute-api.us-east-1.amazonaws.com/dev/buildSignedUrlUpload`
+        url: `https://o7b2gdvqsd.execute-api.us-east-1.amazonaws.com/prod/buildSignedUrlUpload`
       })
 
       console.log('Response: ', response.data)

@@ -106,7 +106,8 @@ functions:
           cors: true
           authorizer:
             name: authorizer
-            arn: arn:aws:cognito-idp:us-east-1:132080954908:userpool/us-east-1_75UGv7Hjf
+            # arn: arn:aws:cognito-idp:us-east-1:132080954908:userpool/us-east-1_75UGv7Hjf
+            arn: arn:aws:cognito-idp:us-east-1:132080954908:userpool/us-east-1_N9HQPnrAW
           request:
             parameters:
               querystrings:
@@ -120,10 +121,6 @@ functions:
 
   sendTclInvoice:
     handler: handler.sendTclInvoice
-
-#    The following are a few example events you can configure
-#    NOTE: Please make sure to change your handler code to work with those events
-#    Check the event documentation for details
     events:
       - existingS3:
           bucket: ${self:custom.tclBucketName}-${self:provider.stage}
@@ -184,7 +181,7 @@ resources:
     buildSignedUrlUploadRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: buildSignedUrlUploadRole
+        RoleName: buildSignedUrlUploadRole-${self:provider.stage}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -225,7 +222,7 @@ resources:
         Subscription:
         - Endpoint: ${self:custom.accountableEmail}
           Protocol: email
-        TopicName: tclError
+        TopicName: tclError-${self:provider.stage}
 
     UserPool:
       Type: AWS::Cognito::UserPool
@@ -234,7 +231,7 @@ resources:
           AllowAdminCreateUserOnly: true
         UsernameAttributes: 
           - email
-        UserPoolName: tcl
+        UserPoolName: tcl-${self:provider.stage}
         Policies:
           PasswordPolicy:
             MinimumLength: 6
