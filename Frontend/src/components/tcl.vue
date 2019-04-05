@@ -41,6 +41,7 @@ export default {
       this.createImage(files[0])
     },
     createImage (file) {
+      console.log('VUE_APP_BUILD_SIGNED_URL_ENDPOINT: ' + process.env.VUE_APP_BUILD_SIGNED_URL_ENDPOINT)
       // var image = new Image()
       let reader = new FileReader()
       reader.onload = (e) => {
@@ -78,7 +79,8 @@ export default {
           filename: this.filename
         },
         // url: `https://c60esxid12.execute-api.us-east-1.amazonaws.com/dev/buildSignedUrlUpload`
-        url: `https://o7b2gdvqsd.execute-api.us-east-1.amazonaws.com/prod/buildSignedUrlUpload`
+        // url: `https://o7b2gdvqsd.execute-api.us-east-1.amazonaws.com/prod/buildSignedUrlUpload`
+        url: process.env.VUE_APP_BUILD_SIGNED_URL_ENDPOINT
       })
 
       console.log('Response: ', response.data)
