@@ -212,12 +212,11 @@ def sendMail(emailFrom, emailTo, emailCc, invoiceFilename, tclCardObjectKey, mon
             }
             # ConfigurationSetName=CONFIGURATION_SET
         )
+        print("Email sent! Message ID:"),
+        print(response['MessageId'])
     # Display an error if something goes wrong.	
     except ClientError as e:
         print(e.response['Error']['Message'])
-    else:
-        print("Email sent! Message ID:"),
-        print(response['MessageId'])
 
 def sendTclInvoice(event, context):
     try:
@@ -242,9 +241,8 @@ def sendTclInvoice(event, context):
         s3 = boto3.resource('s3')
         fileKeyRenamed = 'final/' + filename
         print('fileKeyRenamed: ' + fileKeyRenamed)
-        if (fileKey != fileKeyRenamed):
-            s3.Object(bucket,fileKeyRenamed).copy_from(CopySource=bucket + '/' + fileKey)
-            s3.Object(bucket,invoiceFilename).delete()
+        s3.Object(bucket,fileKeyRenamed).copy_from(CopySource=bucket + '/' + fileKey)
+        s3.Object(bucket,fileKey).delete()
         s3.Bucket(bucket).download_file(fileKeyRenamed, prefix + filename)
         s3.Bucket(bucket).download_file(tclCardObjectKey, prefix + tclCardObjectKey)
         

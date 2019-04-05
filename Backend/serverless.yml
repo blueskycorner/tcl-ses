@@ -106,8 +106,8 @@ functions:
           cors: true
           authorizer:
             name: authorizer
-            # arn: arn:aws:cognito-idp:us-east-1:132080954908:userpool/us-east-1_75UGv7Hjf
-            arn: arn:aws:cognito-idp:us-east-1:132080954908:userpool/us-east-1_N9HQPnrAW
+            arn: arn:aws:cognito-idp:us-east-1:132080954908:userpool/us-east-1_1yGbQLFkr
+            # arn: arn:aws:cognito-idp:us-east-1:132080954908:userpool/us-east-1_N9HQPnrAW
           request:
             parameters:
               querystrings:
@@ -239,6 +239,16 @@ resources:
             RequireNumbers: false
             RequireSymbols: false
             RequireUppercase: false
+    UserPoolUser:        
+      Type: AWS::Cognito::UserPoolUser
+      Properties:
+        DesiredDeliveryMediums: 
+          - EMAIL
+        UserAttributes: 
+          - Name: email
+            Value: benjamin.ehlers@hardis.fr
+        Username: benjamin.ehlers@hardis.fr
+        UserPoolId: !Ref UserPool
 
     AppClient:
       Type: AWS::Cognito::UserPoolClient
