@@ -11,7 +11,20 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
-const env = require('../config/prod.env')
+let env
+switch (process.env.NODE_ENV) {
+  case 'test':
+    env = require('../config/test.env')
+    break
+  // this is the new env. you can of course change the name or add even more envs
+  case 'staging':
+    env = require('../config/staging.env')
+    break
+  case 'production':
+  default:
+    env = require('../config/prod.env')
+    break
+}
 
 const webpackConfig = merge(baseWebpackConfig, {
   module: {
