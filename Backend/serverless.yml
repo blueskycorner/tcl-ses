@@ -24,6 +24,7 @@ plugins:
 provider:
   name: aws
   runtime: python3.7
+  region: us-east-1
   stage: ${opt:stage, 'dev'}
   stackTags:
     Application: tcl
@@ -104,10 +105,6 @@ functions:
           path: buildSignedUrlUpload
           method: get
           cors: true
-          authorizer:
-            name: authorizer
-            arn: arn:aws:cognito-idp:us-east-1:132080954908:userpool/us-east-1_1yGbQLFkr
-            # arn: arn:aws:cognito-idp:us-east-1:132080954908:userpool/us-east-1_N9HQPnrAW
           request:
             parameters:
               querystrings:
@@ -223,6 +220,19 @@ resources:
         - Endpoint: ${self:custom.accountableEmail}
           Protocol: email
         TopicName: tclError-${self:provider.stage}
+
+    ApiGatewayAuthorizer:
+      DependsOn:
+        - ApiGatewayRestApi
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: authorizer
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - Fn::GetAtt: [UserPool, Arn]
 
     UserPool:
       Type: AWS::Cognito::UserPool
